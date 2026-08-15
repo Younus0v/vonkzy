@@ -14,12 +14,13 @@ Most of the lost lead-conversion in roofing comes from missed phone calls, not j
 
 ## Tech stack
 
-- **Backend:** Node.js / Express
+- **Backend (live logic):** Node.js / Express — handles incoming Twilio webhooks and calls Claude in real time. Hosted on Render or Railway.
+- **Database:** Supabase — stores conversations, leads, bookings, and customer data. Its built-in table view also works as a basic dashboard early on, before a custom one is built.
 - **AI:** Anthropic Claude API (Haiku for routine replies, Sonnet for anything ambiguous or low-confidence)
 - **Messaging:** Twilio (SMS, missed-call detection)
 - **Calendar/booking:** Google Calendar API to start; job-management tool integrations (AccuLynx, JobNimbus, Housecall Pro) added later, via Zapier where no native integration exists
 - **Payments:** Stripe
-- **Hosting:** Vercel (or similar)
+- **Frontend (later):** hosted on Vercel
 
 ## Getting started
 
@@ -35,6 +36,8 @@ Fill in `.env` with:
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_PHONE_NUMBER`
 - `ANTHROPIC_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
 
 Then:
 ```bash
@@ -49,7 +52,7 @@ For Twilio to reach your local machine during development, use a tunnel (e.g. `n
 src/
   server.js          — routes and webhook entry points
   ai.js              — Claude conversation logic and qualifying questions
-  store.js           — conversation state (in-memory for now, real DB later)
+  store.js           — reads and writes conversation/lead data to Supabase
   calendar.js         — booking logic (Google Calendar first, others later)
 webhooks/
   missed-call         — fires on an unanswered call, sends the opt-in message
@@ -67,4 +70,3 @@ webhooks/
 ## Important — read before touching the messaging logic
 
 The missed-call flow and the web-form flow are **not** the same, on purpose — see `CLAUDE.md` for the consent reasoning. Do not make missed-call messages skip the opt-in step without understanding why it's there first.
-Re
