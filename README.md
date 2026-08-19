@@ -62,8 +62,8 @@ webhooks/
 
 ## Pricing (for reference — not part of the app yet)
 
-- Starter — $199/month, up to 50 leads
-- Pro — $399/month, up to 200 leads
+- Starter — $199/month, up to 75 leads
+- Pro — $399/month, up to 250 leads
 - Growth — $699/month, unlimited leads
 - First 10 customers — $99/month, locked in while continuously subscribed
 
