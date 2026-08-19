@@ -2,7 +2,7 @@
 
 AI that recovers missed roofing leads.
 
-When a homeowner calls a roofing company and nobody answers, or fills out the company's website contact form, Vonkzy instantly texts them back, asks a short set of qualifying questions, and books the inspection on the contractor's calendar — before the lead goes to a competitor instead.
+When a homeowner fills out the roofing company's website contact form, Vonkzy instantly texts them back, asks a short set of qualifying questions, and books the inspection on the contractor's calendar — before the lead goes to a competitor instead. When a call is missed, Vonkzy alerts the contractor directly so they can call back fast; it does not yet text the homeowner automatically on that trigger, since the legal basis for that specific case is still unresolved (see `CLAUDE.md`).
 
 ## Status
 
@@ -69,4 +69,4 @@ webhooks/
 
 ## Important — read before touching the messaging logic
 
-The missed-call flow and the web-form flow are **not** the same, on purpose — see `CLAUDE.md` for the consent reasoning. Do not make missed-call messages skip the opt-in step without understanding why it's there first.
+Missed calls and missed forms are **not** handled the same way, on purpose — see `CLAUDE.md` for the full reasoning. Right now, missed calls alert the contractor only; they do not trigger an automated text to the homeowner. Do not add a homeowner-facing automated text to the missed-call flow without reading the consent section in `CLAUDE.md` first — that part is gated behind a real legal review, not a design decision to make casually.
