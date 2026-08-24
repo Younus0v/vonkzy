@@ -82,4 +82,4 @@ Saudi Arabia is a verified supported payout country per Paddle's official docume
 
 ## Important — read before touching the messaging logic
 
-Missed calls and missed forms are **not** handled the same way, on purpose — see `CLAUDE.md` for the full reasoning. Right now, missed calls alert the contractor only; they do not trigger an automated text to the homeowner. Do not add a homeowner-facing automated text to the missed-call flow without reading the consent section in `CLAUDE.md` first — that part is gated behind a real legal review, not a design decision to make casually.
+Missed calls and missed forms are **not** handled the same way, on purpose — see `CLAUDE.md` for the full reasoning. Right now, missed calls alert the contractor only; they do not trigger an automated text to the homeowner. Do not add a homeowner-facing automated text to the missed-call flow without reading the consent section in `CLAUDE.md` first — that part is gated behind a real legal review, not a design decision to make casually
