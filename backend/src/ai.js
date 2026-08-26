@@ -71,7 +71,7 @@ async function getNextStep({ template, companyName, history, newMessage }) {
   // Haiku handles routine turns. If a reply ever looks ambiguous, this is the
   // spot to route to Sonnet instead — flagged here for that future upgrade.
   const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 400,
     system: SYSTEM_PROMPT(template, companyName),
     messages,
