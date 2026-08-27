@@ -62,6 +62,19 @@ Respond ONLY with a JSON object, no other text, in this exact shape:
 // Takes the conversation so far and the newest homeowner message,
 // returns the AI's decision as a parsed object.
 async function getNextStep({ template, companyName, history, newMessage }) {
+  // MOCK MODE — set MOCK_AI=true in .env to test the rest of the system
+  // (Supabase, Twilio, routing) without spending anything on real API calls.
+  // Turn it off (or remove it) when you actually need to test the AI itself.
+  if (process.env.MOCK_AI === "true") {
+    console.log("[MOCK_AI] Skipping real Claude call — using a fake response.");
+    return {
+      reply: "This is a MOCK reply — no real AI or money was used for this test.",
+      escalate: false,
+      ready_to_book: false,
+      extracted: { job_type: "mock", roof_age: "mock", insurance_claim: null },
+    };
+  }
+
   const messages = history.map((m) => ({
     role: m.direction === "inbound" ? "user" : "assistant",
     content: m.body,
