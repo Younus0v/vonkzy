@@ -79,8 +79,12 @@ async function getNextStep({ template, companyName, history, newMessage }) {
 
   const raw = response.content[0].text;
 
+  // Claude sometimes wraps JSON in markdown code fences even when told not
+  // to. Strip ```json / ``` before parsing, so this doesn't break on that.
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+
   try {
-    return JSON.parse(raw);
+    return JSON.parse(cleaned);
   } catch (err) {
     // If the model ever fails to return valid JSON, fail safe: escalate
     // rather than guess. Never let a parsing error silently drop a lead.
