@@ -59,14 +59,45 @@ This second template is a hypothesis, written now instead of left as a someday-i
 
 Both templates live in config, not hardcoded into the conversation flow, so adding a third (e.g. tile roofs, a different region) doesn't require touching the core logic.
 
+## Every message is visible, even though sending is automatic
+
+The AI sends messages on its own, instantly, without the contractor approving each one first —
+that's the entire point, since waiting for human approval would recreate the original slow-response
+problem. But nothing is hidden: every message, in both directions, is saved to the `messages` table
+the moment it happens, and the dashboard (Phase 8) shows the full conversation for every lead. Fast
+and autonomous, but never invisible or unaccountable.
+
+## Tone: warm and honest, never manipulative
+
+The AI should sound like a genuinely attentive person, not a script — acknowledging what the
+homeowner said, matching their tone, sounding calm and reassuring rather than clinical. This is a
+deliberate improvement, not filler. It does NOT mean adding persuasion tactics: no manufactured
+urgency, no guilt, no oversized enthusiasm to push a booking. If asked directly whether it's an AI,
+it must answer honestly, never claim to be a human employee. Warmth builds trust; pressure destroys
+it — don't blur that line when iterating on this later.
+
+## Conversation history as a retention feature — not just data storage
+
+Every message has been saved to Supabase since the very first version of this project — that part
+already exists, it isn't new work. What's still missing is a real screen to browse it well. This
+matters beyond just being useful: a contractor who can look back at months of real conversations,
+bookings, and outcomes inside Vonkzy has a real reason not to switch to a competitor — leaving means
+losing that history, not just switching a phone number. Treat the history view in Phase 8 as a
+retention feature, not just a nice-to-have list.
+
+Build the actual thread/timeline view using shadcn/ui components (already the dashboard's base) —
+no need for a separate charting or chat library. For inspiration on how to lay out a clean
+conversation-thread UI specifically, Chatwoot's inbox view (already noted elsewhere as a design
+reference, not something to install) is the right thing to look at.
+
 ## Tech stack and conventions
 
 - Node.js / Express for the live backend — this is what receives Twilio webhooks and calls Claude. Do not move this logic into Supabase Edge Functions; keep it a plain Node server, since that's the pattern Twilio's own docs and most reference examples use, which matters when debugging.
 - Supabase for all data storage — conversations, leads, bookings, customers. All reads/writes to stored data go through `store.js`, not scattered across route handlers.
-- Anthropic Claude API for the conversation logic — Haiku for routine qualifying turns, Sonnet for anything ambiguous or low-confidence
+- Anthropic Claude API for the conversation logic — Haiku only, deliberately. Do not add Sonnet routing without checking with the founder first, since cost predictability was an explicit decision, not an oversight.
 - Twilio for SMS and missed-call detection
 - Google Calendar API for booking (first integration); other job-management tools (AccuLynx, JobNimbus, Housecall Pro) come later, via Zapier where there's no native integration yet
-- Stripe for billing
+- Paddle for billing (Merchant of Record — handles payments and payout, no Stripe/LLC needed)
 - Keep code simple and heavily commented — the founder is non-technical but hands-on, tests everything directly, and needs to be able to read and follow the code, not just run it.
 - Favor small, single-purpose files over large ones. Avoid adding new dependencies unless there's a clear reason.
 

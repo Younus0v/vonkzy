@@ -16,7 +16,7 @@ Most of the lost lead-conversion in roofing comes from missed phone calls, not j
 
 - **Backend (live logic):** Node.js / Express — handles incoming Twilio webhooks and calls Claude in real time. To be deployed on Render or Google Cloud Run (currently runs locally only).
 - **Database:** Supabase — stores conversations, leads, bookings, and customer data. Auth and row-level security (RLS) also come from Supabase, not a separate tool.
-- **AI:** Anthropic Claude API (Haiku for routine replies, Sonnet for anything ambiguous or low-confidence). A `MOCK_AI=true` setting exists in `.env` to test everything else for free, without calling the real API.
+- **AI:** Anthropic Claude API — Haiku only, on purpose, to keep costs minimal and predictable. A `MOCK_AI=true` setting exists in `.env` to test everything else for free, without calling the real API.
 - **Messaging:** Twilio (SMS, missed-call detection)
 - **Calendar/booking:** Google Calendar API to start; job-management tool integrations (AccuLynx, JobNimbus, Housecall Pro) added later, via Zapier where no native integration exists
 - **Payments:** Paddle (Merchant of Record — no US LLC, no Stripe account needed)
