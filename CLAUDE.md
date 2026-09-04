@@ -59,6 +59,15 @@ This second template is a hypothesis, written now instead of left as a someday-i
 
 Both templates live in config, not hardcoded into the conversation flow, so adding a third (e.g. tile roofs, a different region) doesn't require touching the core logic.
 
+## Known, tracked issue — not yet fixable
+
+`npm audit` flags 3 moderate-severity vulnerabilities in `qs` (a dependency of `body-parser`,
+used by `express`) — a denial-of-service risk in URL parsing. Confirmed as of this writing that
+neither `npm audit fix` nor `npm audit fix --force` resolves it — the fix isn't released upstream
+yet, not something wrong in this project's own code. Low real risk today since there's no public
+traffic yet and rate limiting is already in place. **Re-run `npm audit` and check for a fix before
+Phase 9 (real Twilio traffic) and before the pilot goes live** — don't let this get forgotten.
+
 ## Every message is visible, even though sending is automatic
 
 The AI sends messages on its own, instantly, without the contractor approving each one first —
@@ -89,6 +98,14 @@ Build the actual thread/timeline view using shadcn/ui components (already the da
 no need for a separate charting or chat library. For inspiration on how to lay out a clean
 conversation-thread UI specifically, Chatwoot's inbox view (already noted elsewhere as a design
 reference, not something to install) is the right thing to look at.
+
+## Known, deliberately deferred issue
+
+`npm audit` flags 3 moderate-severity vulnerabilities in `qs`/`body-parser`, inherited from Express
+4.x itself — not something `npm audit fix` can resolve without a major-version jump to Express 5.
+Low real risk right now (no live customer traffic yet), but this must be revisited and properly
+fixed before Phase 10 (free pilot) goes live with real people. Not a silent gap — a known, tracked
+item.
 
 ## Tech stack and conventions
 
