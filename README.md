@@ -6,7 +6,11 @@ When a homeowner fills out the roofing company's website contact form, Vonkzy in
 
 ## Status
 
-Early development. Pre-launch, pre-revenue. Backend is built and tested locally — real bugs found and fixed — but currently only runs on a developer's machine, not deployed anywhere permanent yet. That's the next real step, not a finished product waiting on customers.
+Pre-launch, pre-revenue — but no longer just local code. The backend is live on the internet, tested, and secured with real headers, rate limiting, and Twilio signature verification (currently off, ready to switch on before Phase 9). The landing page is live too. What's left is the parts an actual user signs up through and clicks around in — auth and the dashboard haven't been built yet.
+
+**Live right now:**
+- Frontend: https://vonkzy.vercel.app
+- Backend: https://vonkzy.onrender.com
 
 ## The core rule this product is built around
 
@@ -14,15 +18,15 @@ Most of the lost lead-conversion in roofing comes from missed phone calls, not j
 
 ## Tech stack
 
-- **Backend (live logic):** Node.js / Express — handles incoming Twilio webhooks and calls Claude in real time. To be deployed on Render or Google Cloud Run (currently runs locally only).
+- **Backend (live logic):** Node.js / Express — handles incoming Twilio webhooks and calls Claude in real time. **Deployed and live on Render.**
 - **Database:** Supabase — stores conversations, leads, bookings, and customer data. Auth and row-level security (RLS) also come from Supabase, not a separate tool.
 - **AI:** Anthropic Claude API — Haiku only, on purpose, to keep costs minimal and predictable. A `MOCK_AI=true` setting exists in `.env` to test everything else for free, without calling the real API.
 - **Messaging:** Twilio (SMS, missed-call detection)
 - **Calendar/booking:** Google Calendar API to start; job-management tool integrations (AccuLynx, JobNimbus, Housecall Pro) added later, via Zapier where no native integration exists
 - **Payments:** Paddle (Merchant of Record — no US LLC, no Stripe account needed)
 - **Frontend:** Next.js/React, hosted on Vercel — live now
+- **Security:** Helmet.js and express-rate-limit — **done, live.** Twilio signature verification — built, off by default (`TWILIO_VALIDATE=true` to turn on). Altcha (bot protection) — still planned.
 - **Dashboard UI (planned):** shadcn/ui + Tailwind, TanStack Table, React Hook Form + Zod
-- **Security (planned):** Helmet.js, express-rate-limit, Altcha (bot protection)
 
 ## Getting started
 
@@ -39,6 +43,7 @@ Fill in `.env` with:
 - `TWILIO_PHONE_NUMBER`
 - `ANTHROPIC_API_KEY`
 - `MOCK_AI` (set to `true` to test without spending on real AI calls)
+- `TWILIO_VALIDATE` (leave `false` for local testing — see CLAUDE.md before turning this on)
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_KEY`
 
@@ -47,14 +52,14 @@ Then:
 npm start
 ```
 
-For Twilio to reach your local machine during development, use a tunnel (e.g. `ngrok http 3001`) and point the Twilio phone number's webhook URLs at the tunnel's address.
+For Twilio to reach your local machine during development, use a tunnel (e.g. `ngrok http 3001`) and point the Twilio phone number's webhook URLs at the tunnel's address — or use the live Render URL directly once a real number exists (Phase 9).
 
 ## Project structure
 
 ```
-frontend/              — the live marketing site (Next.js)
+frontend/              — the live marketing site (Next.js), deployed on Vercel
 backend/
-  src/server.js         — routes and webhook entry points
+  src/server.js         — routes, webhook entry points, security middleware
   src/ai.js              — Claude conversation logic and qualifying questions
   src/store.js            — reads and writes conversation/lead data to Supabase
   src/calendar.js          — booking logic (placeholder — real Google Calendar comes in Phase 6)
@@ -84,6 +89,10 @@ Saudi Arabia is a verified supported payout country per Paddle's official docume
 ## On legal review
 
 The missed-call consent design (see `CLAUDE.md`) was discussed informally, not reviewed by a specialist compliance lawyer. This is a known, accepted gap at this stage — not something to treat as fully resolved. The safer design (alerting the contractor instead of auto-texting the homeowner on a missed call) stays in place regardless, since it doesn't depend on that review to be the right call.
+
+## Known, deliberately deferred issue
+
+`npm audit` flags 3 moderate-severity vulnerabilities inherited from Express 4.x itself, not fixable without a major-version jump. Low real risk with no live customer traffic yet — must be revisited before Phase 10 (free pilot). Tracked, not ignored.
 
 ## Important — read before touching the messaging logic
 
