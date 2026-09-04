@@ -6,19 +6,50 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const twilio = require("twilio");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const store = require("./store");
 const ai = require("./ai");
 const calendar = require("./calendar");
 
 const app = express();
+
+// Render sits behind exactly one proxy layer. Trusting exactly 1 hop (not
+// "true", which trusts any proxy) is what keeps rate limiting from being
+// bypassable by someone faking their IP in a header.
+app.set("trust proxy", 1);
+
+app.use(helmet());
 app.use(bodyParser.urlencoded({ extended: false })); // Twilio sends this format
 app.use(bodyParser.json()); // for the form webhook, sent as JSON
+
+// Rate limiting on every webhook — this is what stops someone from spamming
+// a route and running up a real Anthropic/Twilio bill. 100 requests per
+// 15 minutes per IP is generous for real use, tight enough to block abuse.
+const webhookLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
+app.use("/webhooks", webhookLimiter);
 
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
+
+// Twilio signature verification — confirms a request to /webhooks/missed-call
+// or /webhooks/sms genuinely came from Twilio, not someone pretending to be
+// Twilio. OFF by default (TWILIO_VALIDATE=true to turn on) so local testing
+// with Invoke-RestMethod/curl keeps working. Turn this on before Phase 9,
+// once a real Twilio number is actually pointed at these routes.
+const twilioValidation =
+  process.env.TWILIO_VALIDATE === "true"
+    ? twilio.webhook({ authToken: process.env.TWILIO_AUTH_TOKEN })
+    : (req, res, next) => next();
 
 // Small helper — every outbound text goes through here so it's always
 // saved to Supabase, never sent without a record of it.
@@ -40,7 +71,7 @@ async function sendText({ to, from, body, leadId }) {
 // Per CLAUDE.md: this alerts the CONTRACTOR only. It does not text the
 // homeowner automatically — that consent question isn't resolved yet.
 // ---------------------------------------------------------------------
-app.post("/webhooks/missed-call", async (req, res) => {
+app.post("/webhooks/missed-call", twilioValidation, async (req, res) => {
   try {
     const vonkzyNumber = req.body.To;
     const homeownerNumber = req.body.From;
@@ -128,7 +159,7 @@ app.post("/webhooks/form", async (req, res) => {
 // 3. INCOMING SMS REPLY
 // Handles every text a homeowner sends back during an active conversation.
 // ---------------------------------------------------------------------
-app.post("/webhooks/sms", async (req, res) => {
+app.post("/webhooks/sms", twilioValidation, async (req, res) => {
   try {
     const vonkzyNumber = req.body.To;
     const homeownerNumber = req.body.From;
