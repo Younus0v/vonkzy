@@ -6,11 +6,13 @@ When a homeowner fills out the roofing company's website contact form, Vonkzy in
 
 ## Status
 
-Pre-launch, pre-revenue — but no longer just local code. The backend is live on the internet, tested, and secured with real headers, rate limiting, and Twilio signature verification (currently off, ready to switch on before Phase 9). The landing page is live too. What's left is the parts an actual user signs up through and clicks around in — auth and the dashboard haven't been built yet.
+Pre-launch, pre-revenue — but genuinely real now, not just a plan. The backend is live on the internet, secured, and tested. Real Google Calendar booking is built. **A contractor can actually sign up, log in, and see a page confirming it — real authentication, tested end to end with a real account.** What's left: the actual dashboard content (leads, bookings, ROI numbers), the real phone number, and the free pilot.
 
 **Live right now:**
 - Frontend: https://vonkzy.vercel.app
 - Backend: https://vonkzy.onrender.com
+- Sign up: https://vonkzy.vercel.app/signup
+- Log in: https://vonkzy.vercel.app/login
 
 ## The core rule this product is built around
 
@@ -19,17 +21,19 @@ Most of the lost lead-conversion in roofing comes from missed phone calls, not j
 ## Tech stack
 
 - **Backend (live logic):** Node.js / Express — handles incoming Twilio webhooks and calls Claude in real time. **Deployed and live on Render.**
-- **Database:** Supabase — stores conversations, leads, bookings, and customer data. Auth and row-level security (RLS) also come from Supabase, not a separate tool.
+- **Database:** Supabase — stores conversations, leads, bookings, and customer data. **Row-level security (RLS) is enabled with real policies** — a contractor can only ever see their own data. (See CLAUDE.md for a real incident where this was briefly, incorrectly disabled, then properly fixed.)
+- **Authentication:** Supabase Auth — **done, live.** Real signup and login, linked to each contractor's own record.
 - **AI:** Anthropic Claude API — Haiku only, on purpose, to keep costs minimal and predictable. A `MOCK_AI=true` setting exists in `.env` to test everything else for free, without calling the real API.
 - **Messaging:** Twilio (SMS, missed-call detection)
-- **Calendar/booking:** Google Calendar API to start; job-management tool integrations (AccuLynx, JobNimbus, Housecall Pro) added later, via Zapier where no native integration exists
+- **Calendar/booking:** Google Calendar API — **done.** Real availability checking (skips weekends, finds genuine open slots), not a placeholder. A `MOCK_CALENDAR=true` setting exists for testing without needing real Google Cloud credentials yet.
 - **Payments:** Paddle (Merchant of Record — no US LLC, no Stripe account needed)
-- **Frontend:** Next.js/React, hosted on Vercel — live now
-- **Security:** Helmet.js and express-rate-limit — **done, live.** Twilio signature verification — built, off by default (`TWILIO_VALIDATE=true` to turn on). Altcha (bot protection) — still planned.
-- **Dashboard UI (planned):** shadcn/ui + Tailwind, TanStack Table, React Hook Form + Zod
+- **Frontend:** Next.js/React, hosted on Vercel — live now, including real `/signup`, `/login`, and a placeholder `/dashboard`
+- **Security:** Helmet.js, express-rate-limit, Twilio signature verification (built, off by default until Phase 9) — all **done, live.** Altcha (bot protection) — still planned.
+- **Dashboard UI (planned, Phase 8):** shadcn/ui + Tailwind, TanStack Table, React Hook Form + Zod
 
 ## Getting started
 
+**Backend:**
 ```bash
 git clone <this repo>
 cd backend
@@ -38,31 +42,41 @@ cp .env.example .env
 ```
 
 Fill in `.env` with:
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_PHONE_NUMBER`
-- `ANTHROPIC_API_KEY`
-- `MOCK_AI` (set to `true` to test without spending on real AI calls)
-- `TWILIO_VALIDATE` (leave `false` for local testing — see CLAUDE.md before turning this on)
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_KEY`
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
+- `ANTHROPIC_API_KEY`, `MOCK_AI` (set `true` to test without spending on real AI calls)
+- `TWILIO_VALIDATE` (leave `false` for local testing)
+- `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_KEY_BASE64`, `MOCK_CALENDAR` (set `true` to test without real Google Cloud setup)
 
-Then:
+Then: `npm start`
+
+**Frontend:**
 ```bash
-npm start
+cd frontend
+npm install
+cp .env.local.example .env.local
 ```
 
-For Twilio to reach your local machine during development, use a tunnel (e.g. `ngrok http 3001`) and point the Twilio phone number's webhook URLs at the tunnel's address — or use the live Render URL directly once a real number exists (Phase 9).
+Fill in `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the **public** keys, safe for browser code, different from the backend's secret key.
+
+Then: `npm run dev`
+
+For Twilio to reach your local backend during development, use a tunnel (e.g. `ngrok http 3001`) and point the Twilio phone number's webhook URLs at the tunnel's address — or use the live Render URL directly once a real number exists (Phase 9).
 
 ## Project structure
 
 ```
-frontend/              — the live marketing site (Next.js), deployed on Vercel
+frontend/
+  pages/index.js         — the live marketing site
+  pages/signup.js          — real signup, creates account + contractor record
+  pages/login.js            — real login
+  pages/dashboard.js         — placeholder confirming login works (real content: Phase 8)
+  lib/supabaseClient.js       — frontend's public Supabase connection
 backend/
   src/server.js         — routes, webhook entry points, security middleware
-  src/ai.js              — Claude conversation logic and qualifying questions
-  src/store.js            — reads and writes conversation/lead data to Supabase
-  src/calendar.js          — booking logic (placeholder — real Google Calendar comes in Phase 6)
+  src/ai.js               — Claude conversation logic and qualifying questions
+  src/store.js              — reads and writes conversation/lead data to Supabase
+  src/calendar.js             — real Google Calendar booking logic
 supabase/                — SQL schema and migration files
 ```
 
@@ -90,9 +104,9 @@ Saudi Arabia is a verified supported payout country per Paddle's official docume
 
 The missed-call consent design (see `CLAUDE.md`) was discussed informally, not reviewed by a specialist compliance lawyer. This is a known, accepted gap at this stage — not something to treat as fully resolved. The safer design (alerting the contractor instead of auto-texting the homeowner on a missed call) stays in place regardless, since it doesn't depend on that review to be the right call.
 
-## Known, deliberately deferred issue
+## Known, deliberately deferred issues
 
-`npm audit` flags 3 moderate-severity vulnerabilities inherited from Express 4.x itself, not fixable without a major-version jump. Low real risk with no live customer traffic yet — must be revisited before Phase 10 (free pilot). Tracked, not ignored.
+Two separate moderate-severity `npm audit` findings — one inherited from Express 4.x, one from the `googleapis` package added in Phase 6. Neither has a safe automatic fix without real testing first. Full detail in `CLAUDE.md`. Low real risk with no live customer traffic yet, but must be revisited before Phase 10 (free pilot). Tracked, not ignored.
 
 ## Important — read before touching the messaging logic
 
